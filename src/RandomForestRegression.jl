@@ -1,5 +1,6 @@
 module RandomForestRegression
 
+using DocStringExtensions
 using Random
 using Statistics
 
@@ -43,14 +44,14 @@ function new_split_obj(feature, min_val, max_val, gain, split_val, left_idxs, ri
 end
 
 """
-    cstd(a)
+$(SIGNATURES)
 
 Custom stddev as std([1]) is NaN but should be 0 for most
 """
 cstd(a) = length(a) == 1 ? 0.0 : std(a)
 
 """
-    get_best_split(feature_matrix, left_ys, right_ys, left_idxs, right_idxs, feature_idx, train_ys; run_no=1)
+$(SIGNATURES)
 
 Get the best split object by choosing a random feature and then gets the best split. 
 If no split is found repeat this for 5 times
