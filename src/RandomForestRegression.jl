@@ -1,5 +1,6 @@
 module RandomForestRegression
 
+using DocStringExtensions
 using Random
 using Statistics
 
@@ -43,19 +44,14 @@ function new_split_obj(feature, min_val, max_val, gain, split_val, left_idxs, ri
 end
 
 """
-    cstd(a)
+$(SIGNATURES)
 
 Custom stddev as std([1]) is NaN but should be 0 for most
 """
-function cstd(a)
-    if length(a) == 1
-        return 0.0
-    end
-    return std(a)
-end
+cstd(a) = length(a) == 1 ? 0.0 : std(a)
 
 """
-    get_best_split(feature_matrix, left_ys, right_ys, left_idxs, right_idxs, feature_idx, train_ys; run_no=1)
+$(SIGNATURES)
 
 Get the best split object by choosing a random feature and then gets the best split. 
 If no split is found repeat this for 5 times
@@ -73,7 +69,6 @@ function get_best_split(
 )
     nfeatures = length(feature_idx)
     len_train_xs = size(feature_matrix)[2]
-    t = time()
     rand_feature = rand(1:nfeatures)
     fct_vals = feature_matrix[rand_feature, :]
     min_val = minimum(fct_vals)
@@ -104,8 +99,8 @@ function get_best_split(
             end
 
             if left_end != 0 && right_end != 0
-                @views left_ys_sub = left_ys[1:left_end]
-                @views right_ys_sub = right_ys[1:right_end]
+                left_ys_sub = @view left_ys[1:left_end]
+                right_ys_sub = @view right_ys[1:right_end]
                 gain = cstd(left_ys_sub) + cstd(right_ys_sub)
                 if gain < best_gain
                     best_gain = gain
@@ -161,12 +156,10 @@ function queue_compute_nodes!(
     right_node::Node,
     train_ys,
 )
-    if length(left_node.data_idxs) > 1 #&& cstd(train_ys[left_node.data_idxs]) > 10000
-        push!(queue, left_node)
-    end
-    if length(right_node.data_idxs) > 1 #&& cstd(train_ys[right_node.data_idxs]) > 10000
-        push!(queue, right_node)
-    end
+    length(left_node.data_idxs) > 1 && push!(queue, left_node)
+
+    length(right_node.data_idxs) > 1 && push!(queue, right_node)
+
 end
 
 
@@ -303,7 +296,7 @@ function create_random_tree(
         feature_idx,
         train_ys[cols],
     )
-    s_time = time()
+    s_time = @elapsed begin
     while length(queue) > 0
         node = popfirst!(queue)
         left_node, right_node = compute_node!(
@@ -317,11 +310,12 @@ function create_random_tree(
             feature_idx,
             train_ys[cols],
         )
-        if left_node != nothing
+        if !isnothing(left_node)
             queue_compute_nodes!(queue, left_node, right_node, train_ys[cols])
         end
     end
-    println("time for creating one tree: ", time() - s_time)
+    end
+    println("time for creating one tree: $s_time")
     tree.root = root
     glob_feature_matrix = nothing
 
@@ -333,10 +327,9 @@ function create_random_forest(feature_matrix, train_ys, ntrees)
     tc = 1
     total_nfeatures = size(feature_matrix)[1]
     nfeatures_per_tree = 8
-    ncols_per_tree = convert(Int64, floor(length(train_ys) / 2))
+    ncols_per_tree = floor(Int, length(train_ys) / 2)
 
     while tc < ntrees
-        start_time = time()
 
         feature_idx = first(randperm(total_nfeatures), nfeatures_per_tree)
         cols = first(randperm(length(train_ys)), ncols_per_tree)
@@ -355,7 +348,7 @@ function create_random_forest(feature_matrix, train_ys, ntrees)
 end
 
 function predict_single_tree(tree::Tree, feature_matrix; check_range = false)
-    pred_ys = zeros(size(feature_matrix)[2])
+    pred_ys = zeros(size(feature_matrix,2))
     for r = 1:length(pred_ys)
         node = tree.root
         early_break = false
@@ -386,10 +379,7 @@ function predict_forest(forest::Vector{Tree}, feature_matrix; default = 1)
 
     while true
         tree, dobreak, ptc = get_next_tree()
-        if dobreak
-            break
-        end
-        start_time = time()
+        dobreak && break
         pred = predict_single_tree(tree, feature_matrix)
         push!(predictions, pred)
         if ptc % 20 == 0
@@ -398,9 +388,9 @@ function predict_forest(forest::Vector{Tree}, feature_matrix; default = 1)
         end
     end
 
-    result = zeros(Float64, size(feature_matrix)[2])
-    divider = zeros(Float64, size(feature_matrix)[2])
-    for p_idx = 1:length(predictions)
+    result = zeros(Float64, size(feature_matrix, 2))
+    divider = zeros(Float64, size(feature_matrix, 2))
+    for p_idx = eachindex(predictions)
         tp = predictions[p_idx]
         for c = 1:size(feature_matrix)[2]
             if !isnan(tp[c])
@@ -411,7 +401,7 @@ function predict_forest(forest::Vector{Tree}, feature_matrix; default = 1)
     end
     result ./= divider
 
-    for idx in findall(i -> isnan(i), result)
+    for idx in findall(isnan, result)
         result[idx] = default
         println("HAD TO SET DEFAULT")
     end
