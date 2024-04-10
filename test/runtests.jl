@@ -1,3 +1,4 @@
 using Test
 
-@test true
+include("Aqua.jl")
+

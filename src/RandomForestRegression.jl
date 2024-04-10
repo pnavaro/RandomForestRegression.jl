@@ -1,7 +1,7 @@
 module RandomForestRegression
 
+using Random
 using Statistics
-using StatsBase
 
 mutable struct Node
     feature::Int64
@@ -338,8 +338,8 @@ function create_random_forest(feature_matrix, train_ys, ntrees)
     while tc < ntrees
         start_time = time()
 
-        feature_idx = sample(1:total_nfeatures, nfeatures_per_tree; replace = false)
-        cols = sample(1:length(train_ys), ncols_per_tree; replace = false)
+        feature_idx = first(randperm(total_nfeatures), nfeatures_per_tree)
+        cols = first(randperm(length(train_ys)), ncols_per_tree)
 
         tree =
             create_random_tree(feature_matrix, feature_idx, cols, train_ys, total_nfeatures)

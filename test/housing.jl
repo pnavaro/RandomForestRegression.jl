@@ -4,7 +4,10 @@ using DecisionTree
 using LinearAlgebra
 using RandomForestRegression
 using Statistics
-using StatsBase
+
+
+msd(a, b) = mean(abs2.(a - b))
+rmsd(a, b) = sqrt(msd(a, b))
 
 file = joinpath(@__DIR__, "data", "train.csv")
 df = DataFrame(CSV.File(file, missingstring="NA"))
