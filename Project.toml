@@ -11,11 +11,11 @@ Statistics = "10745b16-79ce-11e8-11f9-7d13ad32a3b2"
 
 [compat]
 Aqua = "0.8.7"
-CSV = "0.10.14"
 DataFrames = "1.6.1"
 DecisionTree = "0.12.4"
 DocStringExtensions = "0.9.3"
 LinearAlgebra = "1"
+MLDatasets = "0.7.14"
 Random = "1"
 Statistics = "1"
 Test = "1"
@@ -23,10 +23,10 @@ julia = "1"
 
 [extras]
 Aqua = "4c88cf16-eb10-579e-8560-4a9242c79595"
-CSV = "336ed68f-0bac-5ca0-87d4-7b16caf5d00b"
 DataFrames = "a93c6f00-e57d-5684-b7b6-d8193f3e46c0"
 DecisionTree = "7806a523-6efd-50cb-b5f6-3fa6f1930dbb"
+MLDatasets = "eb30cadb-4394-5ae3-aed4-317e484a6458"
 Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
 
 [targets]
-test = ["Test", "Aqua", "CSV", "DataFrames", "DecisionTree"]
+test = ["Test", "Aqua", "MLDatasets", "DataFrames", "DecisionTree"]

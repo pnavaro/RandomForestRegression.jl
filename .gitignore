@@ -1,3 +1,10 @@
 test/data
 Manifest.toml
 *.swp
+examples/data/train.csv
+examples/data/test.csv
+examples/data/submission_more_fts.csv
+examples/data/submission_julia_pkg.csv
+examples/data/sample_submission.csv
+examples/data/data_description.txt
+examples/.ipynb_checkpoints/housing-checkpoint.jl
