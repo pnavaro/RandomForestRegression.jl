@@ -5,8 +5,9 @@ using LinearAlgebra
 using RandomForestRegression
 using Statistics
 
+T = Float32
 
-msd(a, b) = mean(abs2.(a - b))
+msd(a, b) = mean(abs2.(a .- b))
 rmsd(a, b) = sqrt(msd(a, b))
 
 file = joinpath(@__DIR__, "data", "train.csv")
@@ -22,9 +23,9 @@ select!(df,vcat(feature_cols,pred_col))
 
 dropmissing!(df)
 
-feature_matrix = transpose(Matrix{Float64}(df[!,feature_cols])) |> collect
+feature_matrix = transpose(Matrix{T}(df[!,feature_cols])) |> collect
 
-train_ys = Vector{Float64}(df[!,pred_col])
+train_ys = Vector{T}(df[!,pred_col])
 
 nof_real_train = floor(Int,0.8*length(train_ys))
 println("Train on $(nof_real_train) of  $(length(train_ys))")
@@ -56,7 +57,7 @@ test_df = DataFrame(CSV.File(test_file, missingstring="NA"))
 select!(test_df, vcat(:Id,feature_cols))
 dropmissing!(test_df)
 
-test_feature_matrix = transpose(Matrix{Float64}(test_df[!,feature_cols])) |> collect
+test_feature_matrix = transpose(Matrix{T}(test_df[!,feature_cols])) |> collect
 
 pred_test_ys = RandomForestRegression.predict_forest(forest, test_feature_matrix; default=mean(real_train_ys))
 
@@ -66,7 +67,7 @@ CSV.write(joinpath(@__DIR__, "data","submission_more_fts.csv"), submission_df)
 
 # # julia package
 
-feature_matrix = Matrix{Float64}(df[!,feature_cols])
+feature_matrix = Matrix{T}(df[!,feature_cols])
 nof_real_train = floor(Int, 0.8*length(train_ys))
 println("Train on $(nof_real_train)  of  $(length(train_ys))")
 real_train_ys = @view train_ys[1:nof_real_train]
@@ -83,7 +84,7 @@ println("With the RandomForestsRegression julia package: ")
 println("MAE: ", mae)
 println("RMSD: ", rmsd(log.(pred_ys), log.(cv_ys)))
 
-test_feature_matrix = Matrix{Float64}(test_df[!,feature_cols])
+test_feature_matrix = Matrix{T}(test_df[!,feature_cols])
 
 pred_test_ys = apply_forest(model, test_feature_matrix)
 

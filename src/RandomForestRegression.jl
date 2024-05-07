@@ -4,39 +4,39 @@ using DocStringExtensions
 using Random
 using Statistics
 
-mutable struct Node
-    feature::Int64
-    comp_value::Float64
-    data_idxs::Vector{Int64}
-    mean::Float64
+mutable struct Node{T}
+    feature::Int
+    comp_value::T
+    data_idxs::Vector{Int}
+    mean::T
     left_child::Union{Nothing,Node}
     right_child::Union{Nothing,Node}
 
-    Node() = new()
+    Node(T::DataType) = new{T}()
 end
 
-mutable struct Tree
-    root::Node
-    Tree() = new()
+mutable struct Tree{T}
+    root::Node{T}
+    Tree(T::DataType) = new{T}()
 end
 
-mutable struct SplitObj
-    feature::Int64
-    min::Float64
-    max::Float64
-    gain::Float64
-    split_val::Float64
-    left_idxs::Vector{Int64}
-    right_idxs::Vector{Int64}
-    SplitObj() = new()
+mutable struct SplitObj{T}
+    feature::Int
+    min::T
+    max::T
+    gain::T
+    split_val::T
+    left_idxs::Vector{Int}
+    right_idxs::Vector{Int}
+    SplitObj(T::DataType) = new{T}()
 end
 
-function new_split_obj(feature, min_val, max_val, gain, split_val, left_idxs, right_idxs)
-    s = SplitObj()
+function new_split_obj(feature, min_val::T, max_val::T, gain, split_val, left_idxs, right_idxs) where T
+    s = SplitObj(T)
     s.feature = feature
     s.min = min_val
     s.max = max_val
-    s.gain = gain
+    s.gain = T(gain)
     s.split_val = split_val
     s.left_idxs = left_idxs
     s.right_idxs = right_idxs
@@ -58,7 +58,7 @@ If no split is found repeat this for 5 times
 Return the split object
 """
 function get_best_split(
-    feature_matrix,
+    feature_matrix :: AbstractMatrix{T},
     left_ys,
     right_ys,
     left_idxs,
@@ -66,7 +66,7 @@ function get_best_split(
     feature_idx,
     train_ys;
     run_no = 1,
-)
+) where T
     nfeatures = length(feature_idx)
     len_train_xs = size(feature_matrix)[2]
     rand_feature = rand(1:nfeatures)
@@ -116,7 +116,7 @@ function get_best_split(
     std_before = cstd(train_ys)
     max_split_c = 15
 
-    split_obj = SplitObj()
+    split_obj = SplitObj(T)
     split_obj.feature = feature_idx[rand_feature]
     split_obj.split_val = best_split_val
     split_obj.min = min_val
@@ -151,11 +151,12 @@ function get_best_split(
 end
 
 function queue_compute_nodes!(
-    queue::Vector{Node},
-    left_node::Node,
-    right_node::Node,
-    train_ys,
-)
+    queue::Vector{Node{T}},
+    left_node::Node{T},
+    right_node::Node{T},
+    train_ys
+) where T 
+
     length(left_node.data_idxs) > 1 && push!(queue, left_node)
 
     length(right_node.data_idxs) > 1 && push!(queue, right_node)
@@ -164,8 +165,8 @@ end
 
 
 function compute_node!(
-    tree::Tree,
-    node::Node,
+    tree::Tree{T},
+    node::Node{T},
     feature_matrix,
     left_ys,
     right_ys,
@@ -173,7 +174,7 @@ function compute_node!(
     right_idxs,
     feature_idx,
     train_ys,
-)
+) where T
     # last three params if split needs to be restarted
     @views split_obj = get_best_split(
         feature_matrix[:, node.data_idxs],
@@ -193,8 +194,8 @@ function compute_node!(
     node.left_child = nothing
     node.right_child = nothing
     if !isinf(split_obj.split_val)
-        left_node = Node()
-        right_node = Node()
+        left_node = Node(T)
+        right_node = Node(T)
         left_node.data_idxs = node.data_idxs[split_obj.left_idxs]
         right_node.data_idxs = node.data_idxs[split_obj.right_idxs]
         left_node.mean = mean(train_ys[node.data_idxs[split_obj.left_idxs]])
@@ -216,7 +217,7 @@ function compute_node!(
 end
 
 function create_root_node!(
-    tree::Tree,
+    tree::Tree{T},
     feature_matrix,
     left_ys,
     right_ys,
@@ -224,7 +225,7 @@ function create_root_node!(
     right_idxs,
     feature_idx,
     train_ys,
-)
+) where T
 
     split_obj = get_best_split(
         feature_matrix,
@@ -235,9 +236,9 @@ function create_root_node!(
         feature_idx,
         train_ys,
     )
-    queue = Vector{Node}()
+    queue = Vector{Node{T}}()
     if !isinf(split_obj.split_val)
-        left_node = Node()
+        left_node = Node(T)
         left_node.feature = -1
         left_node.left_child = nothing
         left_node.right_child = nothing
@@ -245,7 +246,7 @@ function create_root_node!(
         left_node.comp_value = NaN
         left_node.data_idxs = []
 
-        right_node = Node()
+        right_node = Node(T)
         right_node.feature = -1
         right_node.left_child = nothing
         right_node.right_child = nothing
@@ -256,7 +257,7 @@ function create_root_node!(
         left_node.data_idxs = split_obj.left_idxs
         right_node.data_idxs = split_obj.right_idxs
 
-        node = Node()
+        node = Node(T)
         node.feature = split_obj.feature
         node.comp_value = split_obj.split_val
         node.data_idxs = collect(1:size(feature_matrix)[2])
@@ -267,25 +268,25 @@ function create_root_node!(
         queue_compute_nodes!(queue, left_node, right_node, train_ys)
         return node, queue
     end
-    node = Node()
+    node = Node(T)
     node.left_child = nothing
     node.right_child = nothing
     return node, queue
 end
 
 function create_random_tree(
-    glob_feature_matrix,
+        glob_feature_matrix::AbstractMatrix{T},
     feature_idx,
     cols,
     train_ys,
     total_nfeatures,
-)
-    tree = Tree()
+) where T
+    tree = Tree(T)
     @views feature_matrix = glob_feature_matrix[feature_idx, cols]
-    left_ys = zeros(Float64, length(cols))
-    right_ys = zeros(Float64, length(cols))
-    left_idxs = zeros(Int64, length(cols))
-    right_idxs = zeros(Int64, length(cols))
+    left_ys = zeros(T, length(cols))
+    right_ys = zeros(T, length(cols))
+    left_idxs = zeros(Int, length(cols))
+    right_idxs = zeros(Int, length(cols))
     root, queue = create_root_node!(
         tree,
         feature_matrix,
@@ -322,8 +323,8 @@ function create_random_tree(
     return tree
 end
 
-function create_random_forest(feature_matrix, train_ys, ntrees)
-    forest = Vector{Tree}()
+function create_random_forest(feature_matrix::AbstractMatrix{T}, train_ys, ntrees) where T
+    forest = Vector{Tree{T}}()
     tc = 1
     total_nfeatures = size(feature_matrix)[1]
     nfeatures_per_tree = 8
@@ -347,7 +348,7 @@ function create_random_forest(feature_matrix, train_ys, ntrees)
     return forest
 end
 
-function predict_single_tree(tree::Tree, feature_matrix; check_range = false)
+function predict_single_tree(tree::Tree{T}, feature_matrix; check_range = false) where T
     pred_ys = zeros(size(feature_matrix,2))
     for r = 1:length(pred_ys)
         node = tree.root
@@ -366,8 +367,10 @@ function predict_single_tree(tree::Tree, feature_matrix; check_range = false)
     return pred_ys
 end
 
-function predict_forest(forest::Vector{Tree}, feature_matrix; default = 1)
-    predictions = Vector{Vector{Float64}}()
+function predict_forest(forest::Vector{Tree{T}}, feature_matrix::AbstractMatrix{T}; default = 1) where T
+
+    predictions = Vector{T}[]
+
     tc = 0
     function get_next_tree()
         tc += 1
@@ -388,8 +391,8 @@ function predict_forest(forest::Vector{Tree}, feature_matrix; default = 1)
         end
     end
 
-    result = zeros(Float64, size(feature_matrix, 2))
-    divider = zeros(Float64, size(feature_matrix, 2))
+    result = zeros(T, size(feature_matrix, 2))
+    divider = zeros(T, size(feature_matrix, 2))
     for p_idx = eachindex(predictions)
         tp = predictions[p_idx]
         for c = 1:size(feature_matrix)[2]
