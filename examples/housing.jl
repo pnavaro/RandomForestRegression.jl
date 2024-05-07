@@ -1,3 +1,7 @@
+import Pkg; Pkg.add("CSV")
+import Pkg; Pkg.add("DataFrames")
+import Pkg; Pkg.add("DecisionTree")
+
 using CSV
 using DataFrames
 using DecisionTree
@@ -90,5 +94,3 @@ pred_test_ys = apply_forest(model, test_feature_matrix)
 
 submission_df = DataFrame(Id=test_df[!,:Id], SalePrice=pred_test_ys)
 CSV.write(joinpath(@__DIR__, "data", "submission_julia_pkg.csv"), submission_df)
-
-

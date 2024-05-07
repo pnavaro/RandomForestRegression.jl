@@ -1,5 +1,5 @@
 using Test
 
-include("housing.jl")
+include("boston_housing.jl")
 include("Aqua.jl")
 

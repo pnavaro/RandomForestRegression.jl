@@ -297,7 +297,6 @@ function create_random_tree(
         feature_idx,
         train_ys[cols],
     )
-    s_time = @elapsed begin
     while length(queue) > 0
         node = popfirst!(queue)
         left_node, right_node = compute_node!(
@@ -315,8 +314,6 @@ function create_random_tree(
             queue_compute_nodes!(queue, left_node, right_node, train_ys[cols])
         end
     end
-    end
-    println("time for creating one tree: $s_time")
     tree.root = root
     glob_feature_matrix = nothing
 
