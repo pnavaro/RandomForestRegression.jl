@@ -8,3 +8,9 @@ examples/data/submission_julia_pkg.csv
 examples/data/sample_submission.csv
 examples/data/data_description.txt
 examples/.ipynb_checkpoints/housing-checkpoint.jl
+examples/.ipynb_checkpoints/longitudinal_data-checkpoint.ipynb
+examples/.ipynb_checkpoints/merf_algorithm-checkpoint.ipynb
+examples/.ipynb_checkpoints/decision_tree-checkpoint.ipynb
+examples/decision_tree.ipynb
+examples/longitudinal_data.ipynb
+examples/merf_algorithm.ipynb

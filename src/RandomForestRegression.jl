@@ -4,6 +4,8 @@ using DocStringExtensions
 using Random
 using Statistics
 
+include("datalong_generator.jl")
+
 mutable struct Node{T}
     feature::Int
     comp_value::T
@@ -31,7 +33,15 @@ mutable struct SplitObj{T}
     SplitObj(T::DataType) = new{T}()
 end
 
-function new_split_obj(feature, min_val::T, max_val::T, gain, split_val, left_idxs, right_idxs) where T
+function new_split_obj(
+    feature,
+    min_val::T,
+    max_val::T,
+    gain,
+    split_val,
+    left_idxs,
+    right_idxs,
+) where {T}
     s = SplitObj(T)
     s.feature = feature
     s.min = min_val
@@ -58,7 +68,7 @@ If no split is found repeat this for 5 times
 Return the split object
 """
 function get_best_split(
-    feature_matrix :: AbstractMatrix{T},
+    feature_matrix::AbstractMatrix{T},
     left_ys,
     right_ys,
     left_idxs,
@@ -66,7 +76,7 @@ function get_best_split(
     feature_idx,
     train_ys;
     run_no = 1,
-) where T
+) where {T}
     nfeatures = length(feature_idx)
     len_train_xs = size(feature_matrix)[2]
     rand_feature = rand(1:nfeatures)
@@ -154,8 +164,8 @@ function queue_compute_nodes!(
     queue::Vector{Node{T}},
     left_node::Node{T},
     right_node::Node{T},
-    train_ys
-) where T 
+    train_ys,
+) where {T}
 
     length(left_node.data_idxs) > 1 && push!(queue, left_node)
 
@@ -174,7 +184,7 @@ function compute_node!(
     right_idxs,
     feature_idx,
     train_ys,
-) where T
+) where {T}
     # last three params if split needs to be restarted
     @views split_obj = get_best_split(
         feature_matrix[:, node.data_idxs],
@@ -225,7 +235,7 @@ function create_root_node!(
     right_idxs,
     feature_idx,
     train_ys,
-) where T
+) where {T}
 
     split_obj = get_best_split(
         feature_matrix,
@@ -275,12 +285,12 @@ function create_root_node!(
 end
 
 function create_random_tree(
-        glob_feature_matrix::AbstractMatrix{T},
+    glob_feature_matrix::AbstractMatrix{T},
     feature_idx,
     cols,
     train_ys,
     total_nfeatures,
-) where T
+) where {T}
     tree = Tree(T)
     @views feature_matrix = glob_feature_matrix[feature_idx, cols]
     left_ys = zeros(T, length(cols))
@@ -320,7 +330,7 @@ function create_random_tree(
     return tree
 end
 
-function create_random_forest(feature_matrix::AbstractMatrix{T}, train_ys, ntrees) where T
+function create_random_forest(feature_matrix::AbstractMatrix{T}, train_ys, ntrees) where {T}
     forest = Vector{Tree{T}}()
     tc = 1
     total_nfeatures = size(feature_matrix)[1]
@@ -345,8 +355,8 @@ function create_random_forest(feature_matrix::AbstractMatrix{T}, train_ys, ntree
     return forest
 end
 
-function predict_single_tree(tree::Tree{T}, feature_matrix; check_range = false) where T
-    pred_ys = zeros(size(feature_matrix,2))
+function predict_single_tree(tree::Tree{T}, feature_matrix; check_range = false) where {T}
+    pred_ys = zeros(size(feature_matrix, 2))
     for r = 1:length(pred_ys)
         node = tree.root
         early_break = false
@@ -364,7 +374,11 @@ function predict_single_tree(tree::Tree{T}, feature_matrix; check_range = false)
     return pred_ys
 end
 
-function predict_forest(forest::Vector{Tree{T}}, feature_matrix::AbstractMatrix{T}; default = 1) where T
+function predict_forest(
+    forest::Vector{Tree{T}},
+    feature_matrix::AbstractMatrix{T};
+    default = 1,
+) where {T}
 
     predictions = Vector{T}[]
 
@@ -390,7 +404,7 @@ function predict_forest(forest::Vector{Tree{T}}, feature_matrix::AbstractMatrix{
 
     result = zeros(T, size(feature_matrix, 2))
     divider = zeros(T, size(feature_matrix, 2))
-    for p_idx = eachindex(predictions)
+    for p_idx in eachindex(predictions)
         tp = predictions[p_idx]
         for c = 1:size(feature_matrix)[2]
             if !isnan(tp[c])

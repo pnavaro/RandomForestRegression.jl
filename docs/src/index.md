@@ -7,4 +7,10 @@ Documentation for RandomForestRegression.jl
 
 ```@autodocs
 Modules = [RandomForestRegression]
+Order   = [:function]
+```
+
+## References
+
+```@bibliography
 ```
